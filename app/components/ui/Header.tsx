@@ -1,8 +1,9 @@
-"use client";
 
-import { Box, Flex, Text, Image } from "@chakra-ui/react";
 
-export default function Header() {
+import { Box, Flex, Text, HStack } from "@chakra-ui/react";
+
+
+export default async function Header() {
   return (
     <Box
       as="header"
@@ -12,15 +13,22 @@ export default function Header() {
       bg="white"
     >
       <Flex
-        direction="column"
         align="center"
-        py="4"
-        px="4"
+        justify="space-between"
+        px="20"
+        py="3"
+        mx="auto"
+        w="100%"
       >
-        <Image src="/images/ui/logo.svg" alt="Almond" width="220px" />
-        <Text fontSize="xs" color="#FC8FAC" mt="1">
-          無料でエロゲができるサイト
+        {/* 左側：ロゴ */}
+        <Text fontSize="xl" fontWeight="bold" color="#4c4849ff">
+          Astra
         </Text>
+
+        {/* 右側：ログイン/ログアウトボタン */}
+        <HStack>
+          
+        </HStack>
       </Flex>
     </Box>
   );
