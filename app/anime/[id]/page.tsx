@@ -5,17 +5,16 @@ import {
   Heading,
   Text,
   Image,
-  VStack,
-  RatingGroup,
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import ReviewForm from "@/app/components/ui/ReviewForm";
+import ReviewList from "@/app/components/ui/ReviewList";
 
 export default function AnimeDetailPage() {
   const params = useParams();
-  const id = params.id;
-  
+  const id = params.id; // string | undefined のまま使う（あなたの希望通り）
+
   const [anime, setAnime] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [reviews, setReviews] = useState<any[]>([]);
@@ -30,6 +29,8 @@ export default function AnimeDetailPage() {
   // ⭐ アニメ情報 + レビュー読み込み
   useEffect(() => {
     async function load() {
+      if (!id) return; // URL が壊れている場合の保険
+
       // アニメ API
       const res = await fetch(`https://api.jikan.moe/v4/anime/${id}`);
       const json = await res.json();
@@ -70,49 +71,10 @@ export default function AnimeDetailPage() {
       </Text>
 
       {/* ⭐ 切り出した口コミフォーム */}
-      <ReviewForm animeId={id} onSubmitted={loadReviews} />
+      <ReviewForm animeId={id as string} onSubmitted={loadReviews} />
 
-      {/* ⭐ レビュー一覧 */}
-      <Box>
-        <Heading fontSize="xl" mb={3}>
-          みんなの口コミ
-        </Heading>
-
-        {reviews.length === 0 && (
-          <Text color="gray.500">まだレビューがありません。</Text>
-        )}
-
-        <VStack spacing={4}>
-          {reviews.map((r) => (
-            <Box
-              key={r.id}
-              p={3}
-              border="1px solid #ccc"
-              borderRadius="8px"
-              maxW="500px"
-              w="100%"
-            >
-              <Text fontWeight="bold">{r.user_id}</Text>
-
-              <RatingGroup.Root value={r.score} readOnly count={5}>
-                <RatingGroup.Control>
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <RatingGroup.Item key={i} index={i + 1}>
-                      <RatingGroup.ItemIndicator />
-                    </RatingGroup.Item>
-                  ))}
-                </RatingGroup.Control>
-              </RatingGroup.Root>
-
-              <Text mt={2}>{r.comment}</Text>
-
-              <Text fontSize="xs" color="gray.500" mt={2}>
-                {new Date(r.created_at).toLocaleString()}
-              </Text>
-            </Box>
-          ))}
-        </VStack>
-      </Box>
+      {/* ⭐ コンポーネント化したレビュー一覧 */}
+      <ReviewList reviews={reviews} />
     </Box>
   );
 }
