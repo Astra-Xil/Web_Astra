@@ -16,7 +16,7 @@ type Anime = {
   };
 };
 
-export default function TestJikan() {
+export default function AnimeListPage() {
   const router = useRouter();
   const [query, setQuery] = useState("ブル");
   const [input, setInput] = useState("ブル");
@@ -40,14 +40,14 @@ export default function TestJikan() {
     loadAnime(input);
   };
 
-  // ⭐ クリックしたらデータごと渡す！
+  // ⭐ id だけ渡して detail ページへ
   const goDetail = (anime: Anime) => {
-    const encoded = encodeURIComponent(JSON.stringify(anime));
-    router.push(`/anime/detail?data=${encoded}`);
+    router.push(`/anime/${anime.mal_id}`);
   };
 
   return (
     <Box w="100%" px={3} py={3}>
+      {/* ---- 検索バー ---- */}
       <HStack mb={4}>
         <Input
           value={input}
@@ -60,6 +60,7 @@ export default function TestJikan() {
         </Button>
       </HStack>
 
+      {/* ---- 一覧グリッド ---- */}
       <SimpleGrid
         w="100%"
         gap={6}
@@ -71,7 +72,11 @@ export default function TestJikan() {
 
         {!loading &&
           result.map((anime) => (
-            <Box key={anime.mal_id} onClick={() => goDetail(anime)}>
+            <Box
+              key={anime.mal_id}
+              cursor="pointer"
+              onClick={() => goDetail(anime)}
+            >
               <ReviewThumbnail
                 image={
                   anime.images.webp?.image_url ||

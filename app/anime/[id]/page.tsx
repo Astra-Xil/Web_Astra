@@ -1,6 +1,5 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
 import {
   Box,
   Heading,
@@ -12,44 +11,49 @@ import {
   VStack,
   RatingGroup,
 } from "@chakra-ui/react";
-
 import { useEffect, useState } from "react";
-import { createClient } from "@/utils/supabase/client"; // ← ☆ここ重要☆
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
 
 export default function AnimeDetailPage() {
-  const supabase = createClient(); // ← ☆毎回これを作る
+  const params = useParams();
+  const id = params.id;
+
+  const supabase = createClient();
   const router = useRouter();
 
-  const params = useSearchParams();
-  const raw = params.get("data");
+  const [anime, setAnime] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  if (!raw) return <Box textAlign="center">データがありません</Box>;
-
-  const anime = JSON.parse(raw);
-
+  // ⭐ 口コミ入力
   const [name, setName] = useState("");
   const [score, setScore] = useState(3);
   const [comment, setComment] = useState("");
   const [reviews, setReviews] = useState<any[]>([]);
 
-  const storageKey = `reviews_${anime.mal_id}`;
+  const storageKey = `reviews_${id}`;
 
-  // ローカルストレージ読み込み
+  // ⭐ アニメ API 取得
   useEffect(() => {
+    async function load() {
+      const res = await fetch(`https://api.jikan.moe/v4/anime/${id}`);
+      const json = await res.json();
+      setAnime(json.data);
+      setLoading(false);
+    }
+    load();
+
+    // ローカルレビュー読み込み
     const saved = localStorage.getItem(storageKey);
     if (saved) setReviews(JSON.parse(saved));
-  }, []);
+  }, [id]);
 
-  // ⭐ 投稿処理（ログイン必須）
+  // ⭐ 口コミ投稿
   const handleSubmit = async () => {
-    // Supabase Auth のログイン状態チェック
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      router.push("/login");
+      router.push(`/login?next=/anime/detail/${id}`);
       return;
     }
 
@@ -70,20 +74,23 @@ export default function AnimeDetailPage() {
     setComment("");
   };
 
+  if (loading) return <Box p={5}>読み込み中...</Box>;
+
   return (
     <Box px={5} py={5} textAlign="center">
+      {/* ---- タイトル ---- */}
       <Heading fontSize="2xl" mb={3}>
-        {anime.title_japanese || anime.title}
+        {anime?.title_japanese || anime?.title}
       </Heading>
 
-      <Box display="flex" justifyContent="center" w="100%">
+      <Box display="flex" justifyContent="center">
         <Image
           src={
             anime.images?.webp?.large_image_url ||
             anime.images?.jpg?.large_image_url
           }
           alt={anime.title}
-          w="300px"
+          w="320px"
           borderRadius="12px"
           mb={4}
         />
@@ -99,16 +106,14 @@ export default function AnimeDetailPage() {
         border="1px solid #ddd"
         borderRadius="12px"
         mb={6}
-        w="100%"
         maxW="500px"
         mx="auto"
-        textAlign="center"
       >
         <Heading fontSize="lg" mb={3}>
           口コミを書く
         </Heading>
 
-        <VStack align="center" spacing={3}>
+        <VStack spacing={3}>
           <Input
             placeholder="ニックネーム（任意）"
             value={name}
@@ -116,17 +121,17 @@ export default function AnimeDetailPage() {
             textAlign="center"
           />
 
-          {/* ハート評価 */}
+          {/* ⭐ 評価（ハート系） */}
           <RatingGroup.Root
             value={score}
-            onValueChange={setScore}
+            onValueChange={(v) => setScore(v)}
             count={5}
             size="lg"
           >
             <RatingGroup.HiddenInput />
             <RatingGroup.Control>
-              {Array.from({ length: 5 }).map((_, index) => (
-                <RatingGroup.Item key={index} index={index + 1}>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <RatingGroup.Item key={i} index={i + 1}>
                   <RatingGroup.ItemIndicator />
                 </RatingGroup.Item>
               ))}
@@ -146,7 +151,7 @@ export default function AnimeDetailPage() {
         </VStack>
       </Box>
 
-      {/* ---- 口コミ一覧 ---- */}
+      {/* ---- レビュー一覧 ---- */}
       <Box>
         <Heading fontSize="xl" mb={3}>
           みんなの口コミ
@@ -156,24 +161,23 @@ export default function AnimeDetailPage() {
           <Text color="gray.500">まだレビューがありません。</Text>
         )}
 
-        <VStack align="center" spacing={4}>
+        <VStack spacing={4}>
           {reviews.map((r, idx) => (
             <Box
               key={idx}
               p={3}
               border="1px solid #ccc"
               borderRadius="8px"
-              w="100%"
               maxW="500px"
-              textAlign="center"
+              w="100%"
             >
               <Text fontWeight="bold">{r.name}</Text>
 
               <RatingGroup.Root value={r.score} readOnly count={5}>
                 <RatingGroup.Control>
-                  {Array.from({ length: 5 }).map((_, index) => (
-                    <RatingGroup.Item key={index} index={index + 1}>
-                      <RatingGroup.ItemIndicator  />
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <RatingGroup.Item key={i} index={i + 1}>
+                      <RatingGroup.ItemIndicator />
                     </RatingGroup.Item>
                   ))}
                 </RatingGroup.Control>
