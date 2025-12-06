@@ -47,7 +47,7 @@ function parseItems(html: string, queryTitle: string) {
 
       // ★タイトル文字数差（4以上 → 明らかに別作品）
       const diff = Math.abs(normQuery.length - normalize(title).length);
-      if (diff >= 4) return null;
+      if (diff >= 8) return null;
 
       const url = block.match(/<a class="btn"[^>]+href="([^"]+)"/)?.[1] ?? "";
       const releaseStr =
@@ -60,7 +60,7 @@ function parseItems(html: string, queryTitle: string) {
 }
 
 /** 映画.com 全ページスクレイピング */
-async function scrapeEigaComAll(title: string) {
+export async function scrapeEigaComAll(title: string) {
   const base =
     "https://eiga.com/rental/q/?name=" +
     encodeURIComponent(title) +

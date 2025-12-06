@@ -5,6 +5,7 @@ import {
   Heading,
   Text,
   Image,
+  Spinner,
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
@@ -13,11 +14,15 @@ import ReviewList from "@/app/components/ui/ReviewList";
 
 export default function AnimeDetailPage() {
   const params = useParams();
-  const id = params.id; // string | undefined のまま使う（あなたの希望通り）
+  const id = params.id;
 
   const [anime, setAnime] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [reviews, setReviews] = useState<any[]>([]);
+
+  // ⭐ 映画.com 配信状況
+  const [eigaData, setEigaData] = useState<any>(null);
+  const [eigaLoading, setEigaLoading] = useState(true);
 
   // ⭐ Supabase からレビュー取得
   async function loadReviews() {
@@ -26,19 +31,40 @@ export default function AnimeDetailPage() {
     setReviews(json.data || []);
   }
 
-  // ⭐ アニメ情報 + レビュー読み込み
+  // ⭐ 映画.com の配信状況取得（遅くて OK）
+  async function loadEigaData(title: string) {
+    setEigaLoading(true);
+
+    const res = await fetch("/api/SupabaseEigacom", {
+      method: "POST",
+      body: JSON.stringify({ title }),
+    });
+
+    const json = await res.json();
+    setEigaData(json);
+    setEigaLoading(false);
+  }
+
+  // ⭐ アニメ情報 + レビュー + 配信状況（配信状況は一番遅い）
   useEffect(() => {
     async function load() {
-      if (!id) return; // URL が壊れている場合の保険
+      if (!id) return;
 
-      // アニメ API
+      // ① Jikan API（最優先）
       const res = await fetch(`https://api.jikan.moe/v4/anime/${id}`);
       const json = await res.json();
       setAnime(json.data);
       setLoading(false);
 
-      // reviews 取得
-      await loadReviews();
+      // ② レビュー読み込み
+      loadReviews();
+
+      // ③ 配信状況は少し遅れて実行（UIをブロックしない）
+      const title = json.data.title_japanese || json.data.title;
+
+      setTimeout(() => {
+        loadEigaData(title);
+      }, 500); // ← 0.5秒遅らせてページ表示を優先
     }
 
     load();
@@ -70,10 +96,51 @@ export default function AnimeDetailPage() {
         {anime.synopsis || "説明文がありません。"}
       </Text>
 
-      {/* ⭐ 切り出した口コミフォーム */}
+      {/* ⭐ 映画.com 配信状況表示ブロック */}
+      <Box
+        mb={8}
+        p={4}
+        border="1px solid #ccc"
+        borderRadius="12px"
+        bg="white"
+      >
+        <Heading size="md" mb={2}>
+          配信状況
+        </Heading>
+
+        {eigaLoading && (
+          <Box display="flex" justifyContent="center" py={3}>
+            <Spinner />
+            <Text ml={2}>配信状況を読み込み中...</Text>
+          </Box>
+        )}
+
+        {!eigaLoading && eigaData?.items?.length === 0 && (
+          <Text>現在配信情報は見つかりません。</Text>
+        )}
+
+        {!eigaLoading &&
+          eigaData?.items?.map((item: any, i: number) => (
+            <Box
+              key={i}
+              mb={2}
+              p={2}
+              border="1px solid #ddd"
+              borderRadius="8px"
+              textAlign="left"
+            >
+              <Text fontWeight="bold">{item.service}</Text>
+              <Text fontSize="sm" color="gray.600">
+                {item.releaseStr}
+              </Text>
+            </Box>
+          ))}
+      </Box>
+
+      {/* ⭐ 口コミフォーム */}
       <ReviewForm animeId={id as string} onSubmitted={loadReviews} />
 
-      {/* ⭐ コンポーネント化したレビュー一覧 */}
+      {/* ⭐ レビュー一覧 */}
       <ReviewList reviews={reviews} />
     </Box>
   );
