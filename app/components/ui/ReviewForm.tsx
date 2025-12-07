@@ -11,9 +11,10 @@ import {
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
+import { toaster } from "@/components/ui/toaster";
 
 type ReviewFormProps = {
-  animeId: string;          // ← これがポイント
+  animeId: string;
   onSubmitted?: () => void;
 };
 
@@ -25,31 +26,67 @@ export default function ReviewForm({ animeId, onSubmitted }: ReviewFormProps) {
   const [comment, setComment] = useState("");
 
   const handleSubmit = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-    if (!user) {
-      router.push(`/login?next=/anime/detail/${animeId}`);
-      return;
+  if (!user) {
+    toaster.create({
+      title: "ログインが必要です",
+      type: "warning",
+    });
+    router.push(`/login?next=/anime/detail/${animeId}`);
+    return;
+  }
+
+  if (!comment.trim()) {
+    toaster.create({
+      title: "コメントを入力してください",
+      type: "warning",
+    });
+    return;
+  }
+
+  if (comment.length > 500) {
+    toaster.create({
+      title: "コメントは500文字以内です",
+      type: "warning",
+    });
+    return;
+  }
+
+  // 投稿処理（1回だけ）
+  const promise = fetch("/api/reviews", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      anime_id: Number(animeId),
+      score,
+      comment,
+    }),
+  }).then(async (res) => {
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      throw new Error(data?.error ?? "投稿に失敗しました");
     }
 
-    if (!comment.trim()) return;
-
-    await fetch("/api/reviews", {
-      method: "POST",
-      body: JSON.stringify({
-        anime_id: Number(animeId),
-        score,
-        comment,
-      }),
-    });
-
+    // 成功後の処理
     setComment("");
     setScore(3);
-
     onSubmitted?.();
-  };
+  });
+
+  // トーストは promise 自体を渡す
+  toaster.promise(promise, {
+    loading: { title: "投稿中…", description: "少々お待ちください" },
+    success: { title: "投稿完了!", description: "レビューが追加されました" },
+    error: (err) => ({
+      title: "エラーが発生しました",
+      description: err.message,
+    }),
+  });
+};
+
 
   return (
     <Box
@@ -64,7 +101,7 @@ export default function ReviewForm({ animeId, onSubmitted }: ReviewFormProps) {
         口コミを書く
       </Heading>
 
-      <VStack>
+      <VStack align="stretch" spacing={3}>
         <RatingGroup.Root
           value={score}
           onValueChange={(details) => setScore(details.value)}
@@ -82,13 +119,16 @@ export default function ReviewForm({ animeId, onSubmitted }: ReviewFormProps) {
         </RatingGroup.Root>
 
         <Textarea
-          placeholder="コメントを書く"
+          placeholder="コメントを書く（500文字以内）"
           value={comment}
           onChange={(e) => setComment(e.target.value)}
           textAlign="center"
         />
 
-        <Button colorScheme="blue" onClick={handleSubmit}>
+        <Button
+          colorScheme="blue"
+          onClick={handleSubmit}
+        >
           投稿
         </Button>
       </VStack>
