@@ -45,25 +45,28 @@ export default function AnimeDetailPage() {
 
   // ⭐ アニメ情報 API（サーバー側で整形済み）
   useEffect(() => {
-    async function load() {
-      if (!id) return;
+  async function load() {
+    if (!id) return;
 
-      const res = await fetch(`/api/detail_jikan/${id}`);
-      const animeData = await res.json();
+    // ⭐ ① Jikan API → 最優先
+    const res = await fetch(`/api/detail_jikan/${id}`);
+    const animeData = await res.json();
 
-      setAnime(animeData);
-      setLoading(false);
+    setAnime(animeData);
+    setLoading(false);
 
-      // レビュー読み込み
+    // ⭐ ② レビューは少し遅れて読み込み（体感が速くなる）
+    setTimeout(() => {
       loadReviews();
+    }, 300); // ← 300ms が自然（調整可）
 
-      // 配信状況読み込み（遅延実行）
-      const title = animeData.title_japanese || animeData.title;
-      setTimeout(() => loadEigaData(title), 500);
-    }
+    // ⭐ ③ 配信状況も Jikan の後
+    const title = animeData.title_japanese || animeData.title;
+    setTimeout(() => loadEigaData(title), 500);
+  }
 
-    load();
-  }, [id]);
+  load();
+}, [id]);
 
   if (loading) return <Box p={5}>読み込み中...</Box>;
 

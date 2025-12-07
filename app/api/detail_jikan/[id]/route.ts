@@ -1,10 +1,12 @@
+
 import { NextResponse } from "next/server";
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const id = params.id;
+  // ★★★★★ これが必須
+  const { id } = await context.params;
 
   try {
     const res = await fetch(`https://api.jikan.moe/v4/anime/${id}`);
@@ -19,7 +21,6 @@ export async function GET(
     const json = await res.json();
     const a = json.data;
 
-    // ▼ 必要なものだけ返す
     return NextResponse.json({
       mal_id: a.mal_id,
       title: a.title,
