@@ -45,7 +45,7 @@ function parseItems(html: string, queryTitle: string) {
       // ★サービス除外（部分一致 OK）
       if (EXCLUDE_SERVICES.some((ex) => service.includes(ex))) return null;
 
-      // ★タイトル文字数差（4以上 → 明らかに別作品）
+      // ★タイトル類似度フィルタ
       const diff = Math.abs(normQuery.length - normalize(title).length);
       if (diff >= 8) return null;
 

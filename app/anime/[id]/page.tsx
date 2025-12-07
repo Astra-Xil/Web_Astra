@@ -24,47 +24,42 @@ export default function AnimeDetailPage() {
   const [eigaData, setEigaData] = useState<any>(null);
   const [eigaLoading, setEigaLoading] = useState(true);
 
-  // ⭐ Supabase からレビュー取得
+  // ⭐ Supabase レビュー取得
   async function loadReviews() {
     const res = await fetch(`/api/reviews?anime_id=${id}`);
     const json = await res.json();
     setReviews(json.data || []);
   }
 
-  // ⭐ 映画.com の配信状況取得（遅くて OK）
+  // ⭐ 映画.com の配信状況
   async function loadEigaData(title: string) {
     setEigaLoading(true);
-
-    const res = await fetch("/api/SupabaseEigacom", {
+    const res = await fetch("/api/supabase_eigacom", {
       method: "POST",
       body: JSON.stringify({ title }),
     });
-
     const json = await res.json();
     setEigaData(json);
     setEigaLoading(false);
   }
 
-  // ⭐ アニメ情報
+  // ⭐ アニメ情報 API（サーバー側で整形済み）
   useEffect(() => {
     async function load() {
       if (!id) return;
 
-      // ① Jikan API（最優先）
-      const res = await fetch(`https://api.jikan.moe/v4/anime/${id}`);
-      const json = await res.json();
-      setAnime(json.data);
+      const res = await fetch(`/api/detail_jikan/${id}`);
+      const animeData = await res.json();
+
+      setAnime(animeData);
       setLoading(false);
 
-      // ② レビュー読み込み
+      // レビュー読み込み
       loadReviews();
 
-      // ③ 配信状況は少し遅れて実行（UIをブロックしない）
-      const title = json.data.title_japanese || json.data.title;
-
-      setTimeout(() => {
-        loadEigaData(title);
-      }, 500); // ← 0.5秒遅らせてページ表示を優先
+      // 配信状況読み込み（遅延実行）
+      const title = animeData.title_japanese || animeData.title;
+      setTimeout(() => loadEigaData(title), 500);
     }
 
     load();
@@ -74,17 +69,16 @@ export default function AnimeDetailPage() {
 
   return (
     <Box px={5} py={5} textAlign="center">
-      {/* ---- タイトル ---- */}
+
+      {/* タイトル */}
       <Heading fontSize="2xl" mb={3}>
-        {anime?.title_japanese || anime?.title}
+        {anime.title_japanese || anime.title}
       </Heading>
 
+      {/* 画像 */}
       <Box display="flex" justifyContent="center">
         <Image
-          src={
-            anime.images?.webp?.large_image_url ||
-            anime.images?.jpg?.large_image_url
-          }
+          src={anime.image}
           alt={anime.title}
           w="320px"
           borderRadius="12px"
@@ -92,11 +86,12 @@ export default function AnimeDetailPage() {
         />
       </Box>
 
+      {/* 説明文 */}
       <Text fontSize="md" whiteSpace="pre-wrap" mb={8}>
         {anime.synopsis || "説明文がありません。"}
       </Text>
 
-      {/* ⭐ 映画.com 配信状況表示ブロック */}
+      {/* ⭐ 配信状況 */}
       <Box
         mb={8}
         p={4}
@@ -137,10 +132,10 @@ export default function AnimeDetailPage() {
           ))}
       </Box>
 
-      {/* ⭐ 口コミフォーム */}
+      {/* 口コミフォーム */}
       <ReviewForm animeId={id as string} onSubmitted={loadReviews} />
 
-      {/* ⭐ レビュー一覧 */}
+      {/* 口コミ一覧 */}
       <ReviewList reviews={reviews} />
     </Box>
   );
