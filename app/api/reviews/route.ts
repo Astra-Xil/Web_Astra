@@ -5,6 +5,45 @@ import { createClient } from "@/utils/supabase/server";
 // -----------------------
 // POST: Insert Review
 // -----------------------
+async function analyzePerspectiveDirect(text: string) {
+  const apiKey = process.env.PERSPECTIVE_API_KEY;
+
+  if (!apiKey) {
+    console.error("PERSPECTIVE_API_KEY is missing");
+    throw new Error("Perspective API key missing");
+  }
+
+  const url = `https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze?key=${apiKey}`;
+
+  const body = {
+    comment: { text },
+    languages: ["ja"],
+    requestedAttributes: {
+      TOXICITY: {},
+      INSULT: {},
+      PROFANITY: {},
+    },
+    doNotStore: true,
+  };
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  // ★ここが超重要（今の 500 の原因はこれ）
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error("Perspective API Error:", res.status, errorText);
+    throw new Error("Perspective API request failed");
+  }
+
+  return res.json();
+}
+
+
+
 export async function POST(req: Request) {
   const supabase = await createClient();
   const body = await req.json();
@@ -46,12 +85,17 @@ export async function POST(req: Request) {
 
   // ② 個人情報チェック（AIが苦手な部分）
   const personalPatterns = [
-    /\d{10,11}/, // 電話番号
-    /\S+@\S+\.\S+/, // メール
-    /\d{3}-\d{4}/, // 郵便番号
-    /(LINE|Twitter|DM|ID)/i, // SNS誘導
-    /(住所|住み)/, // 住所
+    // 電話番号（090-xxxx / 090xxxxxxxx）
+    /\b0\d{1,4}-\d{1,4}-\d{3,4}\b/,
+    /\b0\d{9,10}\b/,
+
+    // メールアドレス
+    /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/,
+
+    // 郵便番号（123-4567）
+    /\b\d{3}-\d{4}\b/,
   ];
+
 
   if (personalPatterns.some((re) => re.test(text))) {
     return NextResponse.json(
@@ -59,31 +103,24 @@ export async function POST(req: Request) {
       { status: 400 }
     );
   }
+  // ③ Perspective API モデレーション
+  const result = await analyzePerspectiveDirect(text);
+  console.log("Perspective API result:", result);
+  const toxicity =
+    result.attributeScores?.TOXICITY?.summaryScore?.value ?? 0;
+  const insult =
+    result.attributeScores?.INSULT?.summaryScore?.value ?? 0;
+  const profanity =
+    result.attributeScores?.PROFANITY?.summaryScore?.value ?? 0;
 
-  // ③ AIモデレーション（OpenAI Moderation API）
-  const { data: aiResult, error: aiError } = await supabase.functions.invoke(
-    "moderate",
-    {
-      body: { text },
-    }
-  );
-
-  if (aiError) {
-    console.error(aiError);
+  // 閾値（自由に調整してOK）
+  if (toxicity > 0.75 || insult > 0.75 || profanity > 0.75) {
     return NextResponse.json(
-      { error: "AI モデレーションに失敗しました。" },
-      { status: 500 }
-    );
-  }
-
-  const flagged = aiResult?.results?.[0]?.flagged;
-
-  if (flagged) {
-    return NextResponse.json(
-      { error: "AI により不適切と判断されたため投稿できません。" },
+      { error: "不適切な表現が含まれているため投稿できません。" },
       { status: 400 }
     );
   }
+
 
   // DB INSERT
   const { data, error } = await supabase
