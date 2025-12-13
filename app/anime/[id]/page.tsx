@@ -12,15 +12,19 @@ import { useParams } from "next/navigation";
 import ReviewForm from "@/app/components/ui/ReviewForm";
 import ReviewList from "@/app/components/ui/ReviewList";
 
+import { AnimeDetailUI } from "@/types/ui/anime_detail";
+
 export default function AnimeDetailPage() {
   const params = useParams();
-  const id = params.id;
+  const id = params.id as string;
 
-  const [anime, setAnime] = useState<any>(null);
+  // ★★★ any をやめる ★★★
+  const [anime, setAnime] = useState<AnimeDetailUI | null>(null);
   const [loading, setLoading] = useState(true);
+
   const [reviews, setReviews] = useState<any[]>([]);
 
-  // ⭐ 映画.com 配信状況
+  // ⭐ 映画.com 配信状況（今は any のままでOK）
   const [eigaData, setEigaData] = useState<any>(null);
   const [eigaLoading, setEigaLoading] = useState(true);
 
@@ -43,45 +47,48 @@ export default function AnimeDetailPage() {
     setEigaLoading(false);
   }
 
-  // ⭐ アニメ情報 API（サーバー側で整形済み）
+  // ⭐ アニメ情報 API（server 側で整形済み）
   useEffect(() => {
     async function load() {
       if (!id) return;
 
-      // ⭐ ① Jikan API → 最優先
+      // ★★★ 新しい API ★★★
       const res = await fetch(`/api/detail_jikan/${id}`);
-      const animeData = await res.json();
+      const json: { data: AnimeDetailUI } = await res.json();
 
-      setAnime(animeData);
+      setAnime(json.data);
       setLoading(false);
 
-      // ⭐ ② レビューは少し遅れて読み込み（体感が速くなる）
+      // レビュー（遅延）
       setTimeout(() => {
         loadReviews();
-      }, 300); // ← 300ms が自然（調整可）
+      }, 300);
 
-      // ⭐ ③ 配信状況も Jikan の後
-      const title = animeData.title_japanese || animeData.title;
-      setTimeout(() => loadEigaData(title), 500);
+      // 配信状況（遅延）
+      setTimeout(() => {
+        loadEigaData(json.data.title);
+      }, 500);
     }
 
     load();
   }, [id]);
 
-  if (loading) return <Box p={5}>読み込み中...</Box>;
+  if (loading || !anime) {
+    return <Box p={5}>読み込み中...</Box>;
+  }
 
   return (
     <Box px={5} py={5} textAlign="center">
 
       {/* タイトル */}
       <Heading fontSize="2xl" mb={3}>
-        {anime.title_japanese || anime.title}
+        {anime.title}
       </Heading>
 
       {/* 画像 */}
       <Box display="flex" justifyContent="center">
         <Image
-          src={anime.image}
+          src={anime.imageUrl}
           alt={anime.title}
           w="320px"
           borderRadius="12px"
@@ -91,28 +98,26 @@ export default function AnimeDetailPage() {
 
       {/* 説明文 */}
       <Text fontSize="md" whiteSpace="pre-wrap" mb={8}>
-        {anime.synopsis || "説明文がありません。"}
+        {anime.synopsis}
       </Text>
+
       {/* 基本情報 */}
       <Box mb={6} textAlign="left">
-        <Text>形式：{anime.type || "不明"}</Text>
-        <Text>制作：{anime.studios?.join(" / ") || "不明"}</Text>
-        <Text>エピソード：{anime.episodes || "不明"} 話</Text>
-        <Text>
-          放送期間：
-          {anime.aired_from
-            ? `${anime.aired_from} ～ ${anime.aired_to || "放送中"}`
-            : "不明"}
-        </Text>
+        <Text>制作：{anime.meta.studios.join(" / ")}</Text>
+        <Text>エピソード：{anime.hero.episodesText}</Text>
+        <Text>放送状況：{anime.hero.statusLabel}</Text>
+        <Text>放送年：{anime.meta.yearText}</Text>
+        <Text>尺：{anime.meta.durationText}</Text>
       </Box>
 
-      {anime.youtube_id && (
+      {/* 公式PV */}
+      {anime.trailer.youtubeId && (
         <Box my={5}>
           <Heading size="md" mb={2}>公式PV</Heading>
           <iframe
             width="320"
             height="180"
-            src={`https://www.youtube.com/embed/${anime.youtube_id}`}
+            src={`https://www.youtube.com/embed/${anime.trailer.youtubeId}`}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
             style={{ borderRadius: "12px" }}
@@ -161,10 +166,8 @@ export default function AnimeDetailPage() {
           ))}
       </Box>
 
-      {/* 口コミフォーム */}
-      <ReviewForm animeId={id as string} onSubmitted={loadReviews} />
-
-      {/* 口コミ一覧 */}
+      {/* 口コミ */}
+      <ReviewForm animeId={id} onSubmitted={loadReviews} />
       <ReviewList reviews={reviews} />
     </Box>
   );
