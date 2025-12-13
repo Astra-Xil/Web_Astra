@@ -1,18 +1,12 @@
 "use client";
 
-import {
-  Box,
-  Heading,
-  Textarea,
-  Button,
-  VStack,
-  RatingGroup,
-} from "@chakra-ui/react";
+import { Box, Heading, Textarea, Button, VStack, RatingGroup, }
+  from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { toaster } from "@/app/components/ui/toaster";
-
+import { ReviewUI } from "@/types/ui/review";
 type ReviewFormProps = {
   animeId: string;
   onSubmitted?: () => void;
@@ -33,9 +27,12 @@ export default function ReviewForm({ animeId, onSubmitted }: ReviewFormProps) {
       if (!user) return;
 
       const res = await fetch(`/api/reviews?anime_id=${animeId}`);
-      const json = await res.json();
 
-      const mine = json.data.find((r: any) => r.user_id === user.id);
+      const json: { data: ReviewUI[] } = await res.json();
+
+      const mine = json.data.find(
+        (r) => r.user_id === user.id
+      );
 
       if (mine) {
         setAlreadyPosted(true);
