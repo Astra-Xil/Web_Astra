@@ -7,8 +7,14 @@ jobs:
   ci:
     runs-on: ubuntu-latest
 
+    # 👇 ここに env を追加
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20

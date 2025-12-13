@@ -1,6 +1,4 @@
 'use client';
-export const dynamic = "force-dynamic";
-
 import GoogleLoginButton from "../components/auth/GoogleLoginButton";
 
 export default function LoginPage() {
