@@ -22,12 +22,15 @@
 
 //   return <p style={{ textAlign: "center" }}>ログイン中...</p>
 // }
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+
 import { Suspense } from "react";
 import CallbackClient from "./CallbackClient";
 
 export default function Page() {
   return (
-    <Suspense fallback={<div>ログイン中...</div>}>
+    <Suspense fallback={<p style={{ textAlign: "center" }}>ログイン中...</p>}>
       <CallbackClient />
     </Suspense>
   );
