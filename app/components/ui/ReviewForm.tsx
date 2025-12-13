@@ -1,12 +1,19 @@
 "use client";
 
-import { Box, Heading, Textarea, Button, VStack, RatingGroup, }
-  from "@chakra-ui/react";
+import {
+  Box,
+  Heading,
+  Textarea,
+  Button,
+  VStack,
+  RatingGroup,
+} from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { toaster } from "@/app/components/ui/toaster";
 import { ReviewUI } from "@/types/ui/review";
+
 type ReviewFormProps = {
   animeId: string;
   onSubmitted?: () => void;
@@ -15,10 +22,16 @@ type ReviewFormProps = {
 export default function ReviewForm({ animeId, onSubmitted }: ReviewFormProps) {
   const supabase = createClient();
   const router = useRouter();
+
   const [alreadyPosted, setAlreadyPosted] = useState(false);
   const [score, setScore] = useState(3);
   const [comment, setComment] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // ✅ 自分のレビューがあるか確認
   useEffect(() => {
+    let cancelled = false;
+
     async function checkMyReview() {
       const {
         data: { user },
@@ -27,8 +40,19 @@ export default function ReviewForm({ animeId, onSubmitted }: ReviewFormProps) {
       if (!user) return;
 
       const res = await fetch(`/api/reviews?anime_id=${animeId}`);
+      if (!res.ok) return;
 
-      const json: { data: ReviewUI[] } = await res.json();
+      const text = await res.text();
+      if (!text) return;
+
+      let json: { data: ReviewUI[] } | null = null;
+      try {
+        json = JSON.parse(text);
+      } catch {
+        return;
+      }
+
+      if (!json?.data || cancelled) return;
 
       const mine = json.data.find(
         (r) => r.user_id === user.id
@@ -40,9 +64,13 @@ export default function ReviewForm({ animeId, onSubmitted }: ReviewFormProps) {
     }
 
     checkMyReview();
-  },);
 
+    return () => {
+      cancelled = true;
+    };
+  }, [animeId, supabase]);
 
+  // ✅ 投稿処理
   const handleSubmit = async () => {
     const {
       data: { user },
@@ -73,7 +101,8 @@ export default function ReviewForm({ animeId, onSubmitted }: ReviewFormProps) {
       return;
     }
 
-    // 投稿処理（1回だけ）
+    setLoading(true);
+
     const promise = fetch("/api/reviews", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -84,27 +113,28 @@ export default function ReviewForm({ animeId, onSubmitted }: ReviewFormProps) {
       }),
     }).then(async (res) => {
       if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        throw new Error(data?.error ?? "投稿に失敗しました");
+        const text = await res.text();
+        throw new Error(text || "投稿に失敗しました");
       }
 
-      // 成功後の処理
       setComment("");
       setScore(3);
+      setAlreadyPosted(true);
       onSubmitted?.();
     });
 
-    // トーストは promise 自体を渡す
     toaster.promise(promise, {
-      loading: { title: "投稿中…", description: "少々お待ちください" },
-      success: { title: "投稿完了!", description: "レビューが追加されました" },
+      loading: { title: "投稿中…" },
+      success: { title: "投稿完了!" },
       error: (err) => ({
-        title: "エラーが発生しました",
-        description: err instanceof Error ? err.message : "不明なエラーが発生しました",
+        title: "エラー",
+        description:
+          err instanceof Error ? err.message : "不明なエラー",
       }),
     });
-  };
 
+    promise.finally(() => setLoading(false));
+  };
 
   return (
     <Box
@@ -119,16 +149,16 @@ export default function ReviewForm({ animeId, onSubmitted }: ReviewFormProps) {
         口コミを書く
       </Heading>
 
-      <VStack align="stretch">
+      <VStack align="stretch" gap={4}>
         <RatingGroup.Root
           value={score}
-          onValueChange={(details) => setScore(details.value)}
+          onValueChange={(d) => setScore(d.value)}
           count={5}
           size="lg"
           readOnly={alreadyPosted}
         >
           <RatingGroup.HiddenInput />
-          <RatingGroup.Control >
+          <RatingGroup.Control>
             {Array.from({ length: 5 }).map((_, i) => (
               <RatingGroup.Item key={i} index={i + 1}>
                 <RatingGroup.ItemIndicator />
@@ -145,14 +175,15 @@ export default function ReviewForm({ animeId, onSubmitted }: ReviewFormProps) {
           }
           value={comment}
           onChange={(e) => setComment(e.target.value)}
+          disabled={alreadyPosted || loading}
           textAlign="center"
-          disabled={alreadyPosted}
         />
 
         <Button
           colorScheme="blue"
           onClick={handleSubmit}
-          disabled={alreadyPosted}   // ← 追加
+          disabled={alreadyPosted || loading}
+          isLoading={loading}
         >
           {alreadyPosted ? "投稿済みです" : "投稿"}
         </Button>

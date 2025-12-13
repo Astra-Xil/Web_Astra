@@ -30,10 +30,38 @@ export default function AnimeDetailPage() {
 
   // ⭐ Supabase レビュー取得
   async function loadReviews() {
-    const res = await fetch(`/api/reviews?anime_id=${id}`);
-    const json: { data: ReviewUI[] } = await res.json();
-    setReviews(json.data || []);
+  const res = await fetch(`/api/reviews?anime_id=${id}`);
+
+  if (!res.ok) {
+    console.error("reviews api error:", res.status);
+    setReviews([]);
+    return;
   }
+
+  const text = await res.text();
+  if (!text) {
+    // 204 No Content / 空レスポンス
+    setReviews([]);
+    return;
+  }
+
+  let json: { data: ReviewUI[] } | null = null;
+  try {
+    json = JSON.parse(text);
+  } catch (e) {
+    console.error("invalid json:", text);
+    setReviews([]);
+    return;
+  }
+
+  if (!json) {
+  setReviews([]);
+  return;
+}
+
+setReviews(json.data ?? []);
+}
+
 
   // ⭐ 映画.com の配信状況
   async function loadEigaData(title: string) {
