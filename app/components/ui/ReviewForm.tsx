@@ -183,7 +183,7 @@ export default function ReviewForm({ animeId, onSubmitted }: ReviewFormProps) {
           colorScheme="blue"
           onClick={handleSubmit}
           disabled={alreadyPosted || loading}
-          isLoading={loading}
+          loading={loading}
         >
           {alreadyPosted ? "投稿済みです" : "投稿"}
         </Button>
