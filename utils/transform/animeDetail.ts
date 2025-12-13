@@ -1,3 +1,5 @@
+
+
 // src/lib/transform/animeDetail.ts
 import { JikanAnimeDetail } from "@/types/api/jikan_detail";
 import { AnimeDetailUI } from "@/types/ui/anime_detail";
@@ -5,6 +7,10 @@ import { AnimeDetailUI } from "@/types/ui/anime_detail";
 export function toAnimeDetailUI(
   a: JikanAnimeDetail
 ): AnimeDetailUI {
+  const youtubeId =
+    a.trailer?.youtube_id ??
+    extractYoutubeId(a.trailer?.embed_url);
+
   return {
     id: a.mal_id,
     title: a.title,
@@ -37,7 +43,13 @@ export function toAnimeDetailUI(
 
     trailer: {
       url: a.trailer?.url ?? "",
-      youtubeId: a.trailer?.youtube_id ?? "",
+      youtubeId, // ★ ここが補完済み
     },
   };
+}
+
+function extractYoutubeId(embedUrl?: string | null): string {
+  if (!embedUrl) return "";
+  const match = embedUrl.match(/embed\/([^?]+)/);
+  return match ? match[1] : "";
 }

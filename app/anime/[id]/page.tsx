@@ -55,6 +55,7 @@ export default function AnimeDetailPage() {
       // ★★★ 新しい API ★★★
       const res = await fetch(`/api/detail_jikan/${id}`);
       const json: { data: AnimeDetailUI } = await res.json();
+      console.log("CLIENT anime.trailer:", json.data);
 
       setAnime(json.data);
       setLoading(false);
