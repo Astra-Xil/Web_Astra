@@ -11,8 +11,8 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import ReviewForm from "@/app/components/ui/ReviewForm";
 import ReviewList from "@/app/components/ui/ReviewList";
-
 import { AnimeDetailUI } from "@/types/ui/anime_detail";
+import { ReviewUI } from "@/types/ui/review";
 
 export default function AnimeDetailPage() {
   const params = useParams();
@@ -22,16 +22,15 @@ export default function AnimeDetailPage() {
   const [anime, setAnime] = useState<AnimeDetailUI | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const [reviews, setReviews] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<ReviewUI[]>([]);
 
-  // ⭐ 映画.com 配信状況（今は any のままでOK）
   const [eigaData, setEigaData] = useState<any>(null);
   const [eigaLoading, setEigaLoading] = useState(true);
 
   // ⭐ Supabase レビュー取得
   async function loadReviews() {
     const res = await fetch(`/api/reviews?anime_id=${id}`);
-    const json = await res.json();
+    const json: { data: ReviewUI[] } = await res.json();
     setReviews(json.data || []);
   }
 
