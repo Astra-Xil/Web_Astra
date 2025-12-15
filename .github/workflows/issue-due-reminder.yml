@@ -6,6 +6,9 @@ on:
     - cron: "0 0 * * *"
   workflow_dispatch:
 
+permissions:
+  issues: read
+
 jobs:
   remind:
     runs-on: ubuntu-latest
@@ -23,9 +26,10 @@ jobs:
               return;
             }
 
+            // 今日の日付（YYYY-MM-DD）
             const today = new Date().toISOString().slice(0, 10);
 
-            // リポジトリの open Issue を全取得
+            // open Issue をすべて取得
             const issues = await github.paginate(
               github.rest.issues.listForRepo,
               {
@@ -38,17 +42,20 @@ jobs:
             // Due が今日 or 過去の Issue を抽出
             const dueIssues = issues.filter(issue => {
               if (!issue.body) return false;
+
               const match = issue.body.match(/## Due\s*(\d{4}-\d{2}-\d{2})/);
               if (!match) return false;
+
               const due = match[1];
               return due <= today;
             });
 
             if (dueIssues.length === 0) {
-              console.log("No due issues");
+              console.log("No due issues today");
               return;
             }
 
+            // Discord に送るメッセージ
             const message = [
               "⏰ **期限が来たIssueがあります**",
               "",
@@ -57,8 +64,13 @@ jobs:
               ),
             ].join("\n");
 
+            // Discord Webhook に送信
             await fetch(webhook, {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ content: message }),
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                content: message,
+              }),
             });
