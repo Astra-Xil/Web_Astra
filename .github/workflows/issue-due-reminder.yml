@@ -26,10 +26,10 @@ jobs:
               return;
             }
 
-            // 今日の日付（YYYY-MM-DD）
+            // 今日（UTC基準 YYYY-MM-DD）
             const today = new Date().toISOString().slice(0, 10);
 
-            // open Issue をすべて取得
+            // open Issue を取得
             const issues = await github.paginate(
               github.rest.issues.listForRepo,
               {
@@ -39,11 +39,11 @@ jobs:
               }
             );
 
-            // Due が今日 or 過去の Issue を抽出
+            // タイトルから [YYYY-MM-DD] を読む
             const dueIssues = issues.filter(issue => {
-              if (!issue.body) return false;
+              if (!issue.title) return false;
 
-              const match = issue.body.match(/## Due\s*(\d{4}-\d{2}-\d{2})/);
+              const match = issue.title.match(/\[(\d{4}-\d{2}-\d{2})\]/);
               if (!match) return false;
 
               const due = match[1];
@@ -55,7 +55,6 @@ jobs:
               return;
             }
 
-            // Discord に送るメッセージ
             const message = [
               "⏰ **期限が来たIssueがあります**",
               "",
@@ -64,13 +63,8 @@ jobs:
               ),
             ].join("\n");
 
-            // Discord Webhook に送信
             await fetch(webhook, {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                content: message,
-              }),
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ content: message }),
             });
