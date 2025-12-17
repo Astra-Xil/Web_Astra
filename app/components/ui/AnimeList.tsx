@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import ReviewThumbnail from "./AnimeThumnail";
+import AnimeThumnail from "./AnimeThumnail";
 import SearchBar from "./SearchBar";
 import { SimpleGrid, Box } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
@@ -55,7 +55,7 @@ export default function AnimeList() {
       >
         {loading &&
           [...Array(6)].map((_, i) => (
-            <ReviewThumbnail key={i} isLoading />
+            <AnimeThumnail key={i} isLoading />
           ))}
 
         {!loading &&
@@ -65,10 +65,8 @@ export default function AnimeList() {
               cursor="pointer"
               onClick={() => goDetail(anime)}
             >
-              <ReviewThumbnail
-                image={anime.imageUrl}
-                title={anime.title}
-              />
+              <AnimeThumnail anime={anime} />
+
             </Box>
           ))}
       </SimpleGrid>

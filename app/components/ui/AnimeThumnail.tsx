@@ -1,50 +1,42 @@
 import Image from "next/image";
 import { Card, Text, Box, HStack, VStack, Skeleton } from "@chakra-ui/react";
+import { AnimeSearchUI } from "@/types/ui/anime_search";
 
 type Props = {
-  image?: string;
-  title?: string;
-  episodes?: number;
-  score?: number;
-  rank?: number;
-  members?: number;
-  genres?: string[];
-  status?: string;
-  isLoading?: boolean; // ← 追加
+  anime?: AnimeSearchUI;
+  isLoading?: boolean;
 };
 
 export default function AnimeThumnail({
-  image,
-  title,
-  episodes = 0,
-  score = 4.5,
-  rank = 0,
-  members = 0,
-  genres = [],
-  status = "放送終了",
+  anime,
   isLoading = false,
 }: Props) {
+  if (!anime && !isLoading) return null;
+  const {
+    title = "",
+    imageUrl,
+    episodes = 0,
+    genres = [],
+  } = anime ?? {};
+
   return (
-    <Card.Root w="sm" variant="subtle" bg="white" fontWeight={300}>
+    <Card.Root w="sm" variant="subtle" bg="white">
       <HStack align="center" gap={5}>
-        {/* 画像 Skeleton */}
+        {/* 画像 */}
         <Box w="150px" h="220px" position="relative" flexShrink={0}>
           {isLoading ? (
             <Skeleton w="150px" h="220px" borderRadius="12px" />
           ) : (
             <Image
-              src={image ?? "/placeholder.png"}
-              alt={title ?? ""}
+              src={imageUrl || "/placeholder.png"}
+              alt={title}
               fill
-              style={{
-                objectFit: "cover",
-                borderRadius: "12px",
-              }}
+              style={{ objectFit: "cover", borderRadius: "12px" }}
             />
           )}
         </Box>
 
-        {/* テキスト Skeleton */}
+        {/* テキスト */}
         <VStack align="start" flex="1">
           {isLoading ? (
             <>
@@ -56,37 +48,19 @@ export default function AnimeThumnail({
             </>
           ) : (
             <>
-              <Text fontSize="sm" ml={1}>
-                {status}
-              </Text>
+              <Text>{episodes} episodes</Text>
 
-              <Text fontSize="13px">
-                {episodes} episodes
-              </Text>
-
-              <Text  fontSize="md" mt={1}>
+              <Text mt={1}>
                 {title}
               </Text>
 
-              <HStack mt={1} align="end">
-                <VStack align="start">
-                  <Text fontSize="sm">★ {score}</Text>
-                </VStack>
-
-                <VStack align="start">
-                  <Text fontSize="xs">{rank} users</Text>
-                </VStack>
-              </HStack>
               <HStack mt={1}>
-                <Text fontSize="xs">
-                    #SF
-                </Text>
-                <Text fontSize="xs">
-                    #ドラマ
-                </Text>
+                {genres.map((g) => (
+                  <Text key={g} fontSize="xs">
+                    #{g}
+                  </Text>
+                ))}
               </HStack>
-
-
             </>
           )}
         </VStack>
