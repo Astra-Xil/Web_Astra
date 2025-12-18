@@ -44,13 +44,11 @@ export default function RootLayout({
             </Box>
 
             {/* Main */}
-            {/* ❌ h="100vh" 削除 */}
             <VStack align="stretch" flex="1" minW={0}>
               {/* Header：sticky */}
               <Box position="sticky" top="0" zIndex={10} bg="white">
                 <Header />
               </Box>
-              
                 {children}
 
             </VStack>

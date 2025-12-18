@@ -21,6 +21,7 @@ export default function Sidebar() {
             px="12px"
             bg="brand.secondary"
             position="sticky"
+            transition="width 200ms ease"
             top="0"
         >
             <VStack align="stretch" gap={0}>
@@ -56,12 +57,19 @@ export default function Sidebar() {
                         ))}
                     </VStack>
                     {/* レビューを書いたアニメ */}
-                    <VStack align="stretch" gap={3} px="12px">
-                        <Text textStyle="xs" fontWeight="light" color="text.secondary">
+                    <VStack
+                        align="stretch"
+                        gap={3}
+                        px="12px"
+                        opacity={collapsed ? 0 : 1}
+                        pointerEvents={collapsed ? "none" : "auto"}
+                    >
+                        <Text textStyle="xs" fontWeight="light" color="text.secondary" whiteSpace="nowrap" >
                             レビューを書いたアニメ
                         </Text>
+
                         <VStack px="12px" align="stretch" gap={3}>
-                            <Text textStyle="sm" fontWeight="light">ブルーロック</Text>
+                            <Text textStyle="sm" fontWeight="light" whiteSpace="nowrap" >ブルーロック</Text>
                         </VStack>
                     </VStack>
                 </VStack>
