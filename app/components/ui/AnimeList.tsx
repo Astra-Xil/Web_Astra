@@ -39,7 +39,7 @@ export default function AnimeList() {
   };
 
   return (
-    <Box w="100%" px={3} py={3}>
+    <Box w="100%" px={3} py={3} >
       {/* 🔍 検索バー */}
       <SimpleGrid
         w="100%"

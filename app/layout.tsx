@@ -37,13 +37,22 @@ export default function RootLayout({
         }}
       >
         <Providers>
-          <HStack align="start" minH="100vh">
-            <Box ml="240px">
+          <HStack align="start">
+            {/* Sidebar：sticky で見た目固定 */}
+            <Box position="sticky" top="0" alignSelf="flex-start">
               <Sidebar />
             </Box>
+
+            {/* Main */}
+            {/* ❌ h="100vh" 削除 */}
             <VStack align="stretch" flex="1" minW={0}>
-              <Header />
+              {/* Header：sticky */}
+              <Box position="sticky" top="0" zIndex={10} bg="white">
+                <Header />
+              </Box>
+              
                 {children}
+
             </VStack>
           </HStack>
 

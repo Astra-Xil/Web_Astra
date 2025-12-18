@@ -6,32 +6,36 @@ import { LuPanelLeft } from "react-icons/lu";
 import SidebarItem from "./SidebarItem";
 import { sidebarItems } from "./sidebarItems";
 import { Icon } from "@chakra-ui/react";
+import { useState } from "react";
+
 
 export default function Sidebar() {
     const pathname = usePathname();
     const router = useRouter();
-
+    const [collapsed, setCollapsed] = useState(false);
     return (
         <Box
-            position="fixed"
-            top="0"
-            left="0"
             as="aside"
-            w="240px"
+            w={collapsed ? "72px" : "240px"}
             h="100vh"
-            px="24px"
+            px="12px"
             bg="brand.secondary"
+            position="sticky"
+            top="0"
         >
-            <VStack align="stretch" gap={6}>
+            <VStack align="stretch" gap={0}>
                 {/* Logo */}
                 <Box h="80px">
-                    <HStack h="100%" justify="space-between" align="center">
-                        <Text fontWeight="medium">Astra</Text>
+                    <HStack px="12px" h="100%" justify="space-between" align="center">
+                        {!collapsed && (
+                            <Text fontWeight="medium">Astra</Text>
+                        )}
                         <Icon
                             as={LuPanelLeft}
                             boxSize={5}
                             color="text.secondary"
                             strokeWidth={1}
+                            onClick={() => setCollapsed((v) => !v)}
                         />
                     </HStack>
                 </Box>
@@ -39,19 +43,20 @@ export default function Sidebar() {
                 {/* Navigation */}
                 <VStack align="stretch" gap={8}>
                     {/* ページのリンク */}
-                    <VStack align="stretch" gap={3}>
+                    <VStack align="stretch" gap={0}>
                         {sidebarItems.map((item) => (
                             <SidebarItem
                                 key={item.href}
                                 label={item.label}
                                 icon={item.icon}
+                                collapsed={collapsed}
                                 active={pathname === item.href}
                                 onClick={() => router.push(item.href)}
                             />
                         ))}
                     </VStack>
                     {/* レビューを書いたアニメ */}
-                    <VStack align="stretch" gap={3}>
+                    <VStack align="stretch" gap={3} px="12px">
                         <Text textStyle="xs" fontWeight="light" color="text.secondary">
                             レビューを書いたアニメ
                         </Text>
