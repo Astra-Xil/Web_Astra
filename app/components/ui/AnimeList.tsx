@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import AnimeThumnail from "./AnimeThumnail";
-import SearchBar from "./SearchBar";
+import SearchBar from "./Header/SearchBar";
 import { SimpleGrid, Box } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
 
@@ -41,12 +41,6 @@ export default function AnimeList() {
   return (
     <Box w="100%" px={3} py={3}>
       {/* 🔍 検索バー */}
-      <SearchBar
-        value={input}
-        onChange={setInput}
-        onSearch={handleSearch}
-      />
-
       <SimpleGrid
         w="100%"
         gap={6}
