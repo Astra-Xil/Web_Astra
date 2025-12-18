@@ -1,29 +1,61 @@
 import { Providers } from "./components/providers";
-import { M_PLUS_1 } from "next/font/google";
-import Header from "./components/ui/Header";
+import localFont from "next/font/local";
+import Header from "./components/ui/Header/Header";
+import Sidebar from "./components/ui/Sidebar/Sidebar";
 import { Toaster } from "@/app/components/ui/toaster";
-// ★ フォントの読み込み
-export const mplus1 = M_PLUS_1({
-  subsets: ["latin"],
-  weight: ["300", "400", "600"],
+import { Box, HStack, VStack } from "@chakra-ui/react";
+
+export const mplus = localFont({
+  src: [
+    {
+      path: "../fonts/MPLUS1-VariableFont_wght.ttf",
+      weight: "100 900",
+      style: "normal",
+    },
+  ],
   display: "swap",
 });
 
-// ★ SEO metadata
 export const metadata = {
   title: "Astra",
   description: "",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="ja">
-      {/* ➤ フォントを body に適用 */}
-      <body className={mplus1.className} style={{ background: "white" }}>
+      <body
+        className={mplus.className}
+        style={{
+          background: "white",
+          WebkitFontSmoothing: "antialiased",
+          MozOsxFontSmoothing: "grayscale",
+        }}
+      >
         <Providers>
-          <Header />
-          {children}
-          <Toaster />   {/* ← これが必須！！ */}
+          <HStack align="start" gap={0}>
+            {/* Sidebar：sticky で見た目固定 */}
+            <Box position="sticky" top="0" alignSelf="flex-start">
+              <Sidebar />
+            </Box>
+
+            {/* Main */}
+
+            <VStack align="stretch" flex="1" minW={0} gap={0}>
+              {/* Header：sticky */}
+              <Box position="sticky" top="0" zIndex={10} bg="white">
+                <Header />
+              </Box>
+                {children}
+
+            </VStack>
+          </HStack>
+
+          <Toaster />
         </Providers>
       </body>
     </html>

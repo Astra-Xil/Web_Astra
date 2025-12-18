@@ -1,18 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import ReviewThumbnail from "./AnimeThumnail";
-import SearchBar from "./SearchBar";
-import { SimpleGrid, Box } from "@chakra-ui/react";
+import {
+  Box,
+  HStack,
+  Text,
+  IconButton,
+} from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
 
+import AnimeThumnail from "./AnimeThumnail";
 import { AnimeSearchUI } from "@/types/ui/anime_search";
 
 export default function AnimeList() {
   const router = useRouter();
 
-  const [query, setQuery] = useState("ブル");
-  const [input, setInput] = useState("ブル");
+  const [query] = useState("ブル");
   const [result, setResult] = useState<AnimeSearchUI[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -26,52 +29,81 @@ export default function AnimeList() {
 
   useEffect(() => {
     loadAnime(query);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const handleSearch = () => {
-    setQuery(input);
-    loadAnime(input);
-  };
 
   const goDetail = (anime: AnimeSearchUI) => {
     router.push(`/anime/${anime.id}`);
   };
 
   return (
-    <Box w="100%" px={3} py={3}>
-      {/* 🔍 検索バー */}
-      <SearchBar
-        value={input}
-        onChange={setInput}
-        onSearch={handleSearch}
+    <Box position="relative" w="100%">
+      {/* Header */}
+      <HStack mb={3}>
+        <Text fontSize="lg" fontWeight="light" lineHeight="28px">
+          注目のアニメ
+        </Text>
+      </HStack>
+
+      {/* List */}
+      <Box overflowX="auto" css={{
+        scrollbarWidth: "none",     // Firefox
+        msOverflowStyle: "none",    // IE / Edge
+        "&::-webkit-scrollbar": {
+          display: "none",          // Chrome / Safari
+        },
+      }}>
+        <HStack
+          gap={3}
+          px="20px"
+          align="center"
+          w="max-content"
+        >
+          {loading
+            ? [...Array(6)].map((_, i) => (
+              <Box key={i} w="328px">
+                <AnimeThumnail isLoading />
+              </Box>
+            ))
+            : result.map((anime) => (
+              <Box
+                key={anime.id}
+                w="328px"
+                cursor="pointer"
+                onClick={() => goDetail(anime)}
+              >
+                <AnimeThumnail anime={anime} />
+              </Box>
+            ))}
+        </HStack>
+      </Box>
+
+      {/* Back */}
+      {/* <IconButton
+        aria-label="Back"
+        position="absolute"
+        left="0"
+        top="50%"
+        transform="translateY(-50%)"
+        w="44px"
+        h="44px"
+        borderRadius="100px"
+        bg="rgba(155,206,248,0.5)"
+        _hover={{ bg: "rgba(155,206,248,0.7)" }}
       />
 
-      <SimpleGrid
-        w="100%"
-        gap={6}
-        columns={{ base: 1, sm: 2, md: 3, lg: 3 }}
-        placeItems="center"
-      >
-        {loading &&
-          [...Array(6)].map((_, i) => (
-            <ReviewThumbnail key={i} isLoading />
-          ))}
-
-        {!loading &&
-          result.map((anime) => (
-            <Box
-              key={anime.id}
-              cursor="pointer"
-              onClick={() => goDetail(anime)}
-            >
-              <ReviewThumbnail
-                image={anime.imageUrl}
-                title={anime.title}
-              />
-            </Box>
-          ))}
-      </SimpleGrid>
+      {/* Next */}
+      {/* <IconButton
+        aria-label="Next"
+        position="absolute"
+        right="0"
+        top="50%"
+        transform="translateY(-50%)"
+        w="44px"
+        h="44px"
+        borderRadius="100px"
+        bg="rgba(155,206,248,0.5)"
+        _hover={{ bg: "rgba(155,206,248,0.7)" }}
+      /> */}
     </Box>
   );
 }
