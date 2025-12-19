@@ -9,7 +9,7 @@ import {
 } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
 
-import AnimeThumnail from "./AnimeThumnail";
+import AnimeCard from "./AnimeCard";
 import { AnimeSearchUI } from "@/types/ui/anime_search";
 
 export default function AnimeList() {
@@ -61,7 +61,7 @@ export default function AnimeList() {
           {loading
             ? [...Array(6)].map((_, i) => (
               <Box key={i} w="328px">
-                <AnimeThumnail isLoading />
+                <AnimeCard isLoading />
               </Box>
             ))
             : result.map((anime) => (
@@ -71,7 +71,7 @@ export default function AnimeList() {
                 cursor="pointer"
                 onClick={() => goDetail(anime)}
               >
-                <AnimeThumnail anime={anime} />
+                <AnimeCard anime={anime} />
               </Box>
             ))}
         </HStack>

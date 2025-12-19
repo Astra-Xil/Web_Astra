@@ -8,7 +8,7 @@ type Props = {
   isLoading?: boolean;
 };
 
-export default function AnimeThumnail({
+export default function AnimeCard({
   anime,
   isLoading = false,
 }: Props) {

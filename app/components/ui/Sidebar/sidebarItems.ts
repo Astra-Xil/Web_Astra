@@ -9,17 +9,17 @@ export type SidebarItem = {
 
 export const sidebarItems: SidebarItem[] = [
   {
-    label: "Home",
+    label: "ホーム",
     href: "/",
     icon: LuHouse,
   },
   {
-    label: "Contact",
+    label: "マイページ",
     href: "/MyPage",
     icon: LuContact,
   },
   {
-    label: "Setting",
+    label: "設定",
     href: "/Setting",
     icon: LuSettings,
   },
