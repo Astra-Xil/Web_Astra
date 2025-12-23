@@ -1,14 +1,13 @@
 export const runtime = "edge";
 
 import { NextResponse } from "next/server";
-import { createClient } from "@/utils/supabase/server";
+import { createEdgeClient } from "@/utils/supabase/server";
 import { analyzePerspectiveDirect } from "@/utils/api/analyzePerspectiveDirect";
 
 // -----------------------
 // POST: Insert Review
 // -----------------------
 export async function POST(req: Request) {
-  const supabase = await createClient();
   const body = await req.json();
 
   const { anime_id, score, comment } = body;
@@ -16,12 +15,12 @@ export async function POST(req: Request) {
   // =======================
   // 認証（Bearer）
   // =======================
-  const authHeader = req.headers.get("authorization");
-  const token = authHeader?.replace("Bearer ", "");
+  
+  const supabase = createEdgeClient(req);
 
   const {
-    data: { user },
-  } = await supabase.auth.getUser(token);
+  data: { user },
+} = await supabase.auth.getUser();
 
   if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
@@ -125,8 +124,7 @@ export async function POST(req: Request) {
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const anime_id = searchParams.get("anime_id");
-
-  const supabase = await createClient();
+  const supabase = createEdgeClient(req);
 
   const { data, error } = await supabase
     .from("reviews")
