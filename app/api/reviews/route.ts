@@ -8,6 +8,8 @@ import { analyzePerspectiveDirect } from "@/utils/api/analyzePerspectiveDirect";
 // -----------------------
 // POST: Insert Review
 // -----------------------
+
+
 export async function POST(req: Request) {
   const supabase = await createClient();
   const body = await req.json();
@@ -15,10 +17,9 @@ export async function POST(req: Request) {
   const { anime_id, score, comment } = body;
 
   // 認証チェック
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const authHeader = req.headers.get("authorization");
+  const token = authHeader?.replace("Bearer ", "");
+  const { data: { user } } = await supabase.auth.getUser(token);
   if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
