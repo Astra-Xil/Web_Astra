@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
 import { NextResponse } from "next/server";
-import { createClient } from "@/utils/supabase/server";
+import { createEdgeClient } from "@/utils/supabase/server";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -18,7 +18,7 @@ export async function GET(request: Request) {
   }
 
   // ✅ 既存の server client を使う
-  const supabase = await createClient();
+  const supabase = createEdgeClient(request);
 
   // 🔑 Auth callback の本体
   await supabase.auth.exchangeCodeForSession(code);
