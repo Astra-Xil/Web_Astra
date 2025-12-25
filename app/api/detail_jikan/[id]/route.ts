@@ -14,7 +14,7 @@ export async function GET(
 
   try {
     const res = await fetch(
-      `https://api.jikan.moe/v4/anime/${id}`,
+      `https://api.jikan.moe/v4/anime/${id}/full`,
       { next: { revalidate: 3600 } }
     );
 
