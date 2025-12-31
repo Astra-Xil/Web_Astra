@@ -1,5 +1,3 @@
-
-
 // src/lib/transform/animeDetail.ts
 import { JikanAnimeDetail } from "@/types/api/jikan_detail";
 import { AnimeDetailUI } from "@/types/ui/anime_detail";
